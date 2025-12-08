@@ -1,5 +1,5 @@
 import React from 'react'
-import Header from "@/components/Header";
+import Header from "@/components/SharedHeader";
 import {dummyCards} from "@/constants";
 import VideoCard from "@/components/VideoCard";
 import {ParamsWithSearch} from "@/index";
