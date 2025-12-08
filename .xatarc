@@ -1,0 +1,6 @@
+{
+  "databaseURL": "https://Anivesh-Parida-s-workspace-a4fp55.eu-central-1.xata.sh/db/jsm_snapcast",
+  "codegen": {
+    "output": "src/xata.ts"
+  }
+}
