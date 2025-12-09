@@ -6,7 +6,7 @@ type FileInputProps = {
     accept: string;
     file: File | null;
     previewUrl: string;
-    inputRef: React.RefObject<HTMLInputElement>;
+    inputRef: React.RefObject<HTMLInputElement | null>;
     onChange: (e: ChangeEvent<HTMLInputElement>) => void;
     onReset: () => void;
     type: 'image' | 'video';

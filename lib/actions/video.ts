@@ -8,7 +8,19 @@ import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import {apiFetch, doesTitleMatch, getEnv, getOrderByClause, withErrorHandling} from "@/lib/utils";
 import { BUNNY } from "@/constants";
-import aj, { fixedWindow, request } from "../arcjet";
+import aj, { fixedWindow, request } from "@/lib/arcjet";
+
+type Visibility = "public" | "private";
+type BunnyVideoResponse = { guid: string; status: number; encodeProgress?: number };
+type VideoDetails = {
+  title: string;
+  description: string;
+  tags: string;
+  visibility: Visibility;
+  videoId: string;
+  thumbnailUrl: string;
+  duration?: number | null;
+};
 
 // Constants with full names
 const VIDEO_STREAM_BASE_URL = BUNNY.STREAM_BASE_URL;
@@ -42,9 +54,19 @@ const revalidatePaths = (paths: string[]) => {
 };
 
 const getSessionUserId = async (): Promise<string> => {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) throw new Error("Unauthenticated");
-  return session.user.id;
+  try {
+    const headersList = await headers();
+    const session = await auth.api.getSession({ headers: headersList });
+    console.log("[DEBUG] Session retrieved:", session?.user?.id);
+    if (!session) {
+      console.error("[DEBUG] No session found in headers");
+      throw new Error("Unauthenticated");
+    }
+    return session.user.id;
+  } catch (error) {
+    console.error("[DEBUG] getSessionUserId error:", error);
+    throw error;
+  }
 };
 
 const buildVideoWithUserQuery = () =>
@@ -58,7 +80,16 @@ const buildVideoWithUserQuery = () =>
 
 // Server Actions
 export const getVideoUploadUrl = withErrorHandling(async () => {
-  await getSessionUserId();
+  try {
+    const headersList = await headers();
+    console.log('[DEBUG] getVideoUploadUrl headers keys:', Array.from(headersList.keys()));
+    const session = await auth.api.getSession({ headers: headersList });
+    console.log('[DEBUG] getVideoUploadUrl session:', session?.user?.id);
+    if (!session) throw new Error('Unauthenticated');
+  } catch (err) {
+    console.error('[DEBUG] getVideoUploadUrl failed to read session:', err);
+    throw err;
+  }
   const videoResponse = await apiFetch<BunnyVideoResponse>(
     `${VIDEO_STREAM_BASE_URL}/${BUNNY_LIBRARY_ID}/videos`,
     {
@@ -92,31 +123,54 @@ export const getThumbnailUploadUrl = withErrorHandling(
 
 export const saveVideoDetails = withErrorHandling(
   async (videoDetails: VideoDetails) => {
-    const userId = await getSessionUserId();
-    await validateWithArcjet(userId);
-    await apiFetch(
-      `${VIDEO_STREAM_BASE_URL}/${BUNNY_LIBRARY_ID}/videos/${videoDetails.videoId}`,
-      {
-        method: "POST",
-        bunnyType: "stream",
-        body: {
-          title: videoDetails.title,
-          description: videoDetails.description,
-        },
+    try {
+      console.log("[saveVideoDetails] start", {
+        title: videoDetails.title,
+        videoId: videoDetails.videoId,
+        thumbnailUrl: videoDetails.thumbnailUrl,
+        duration: videoDetails.duration,
+      });
+
+      const userId = await getSessionUserId();
+      console.log("[saveVideoDetails] resolved userId", { userId });
+
+      await validateWithArcjet(userId);
+
+      await apiFetch(
+        `${VIDEO_STREAM_BASE_URL}/${BUNNY_LIBRARY_ID}/videos/${videoDetails.videoId}`,
+        {
+          method: "POST",
+          bunnyType: "stream",
+          body: {
+            title: videoDetails.title,
+            description: videoDetails.description,
+          },
+        }
+      );
+
+      const now = new Date();
+      const insertResult = await db.insert(videos).values({
+        ...videoDetails,
+        videoUrl: `${BUNNY.EMBED_URL}/${BUNNY_LIBRARY_ID}/${videoDetails.videoId}`,
+        userId,
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      console.log("[saveVideoDetails] db insert result", insertResult);
+      revalidatePaths(["/"]);
+      return { videoId: videoDetails.videoId };
+    } catch (err) {
+      try {
+        console.error("[saveVideoDetails] ERROR", err instanceof Error ? err.message : String(err), {
+          error: err,
+          payload: videoDetails,
+        });
+      } catch (logErr) {
+        console.error("[saveVideoDetails] ERROR (failed to log)", String(err));
       }
-    );
-
-    const now = new Date();
-    await db.insert(videos).values({
-      ...videoDetails,
-      videoUrl: `${BUNNY.EMBED_URL}/${BUNNY_LIBRARY_ID}/${videoDetails.videoId}`,
-      userId,
-      createdAt: now,
-      updatedAt: now,
-    });
-
-    revalidatePaths(["/"]);
-    return { videoId: videoDetails.videoId };
+      throw err;
+    }
   }
 );
 
@@ -126,7 +180,8 @@ export const getAllVideos = withErrorHandling(async (
   pageNumber: number = 1,
   pageSize: number = 8,
 ) => {
-  const session = await auth.api.getSession({ headers: await headers() })
+  const headersList = await headers();
+  const session = await auth.api.getSession({ headers: headersList })
   const currentUserId = session?.user.id;
 
   const canSeeTheVideos = or(
@@ -204,8 +259,9 @@ export const getAllVideosByUser = withErrorHandling(
     searchQuery: string = "",
     sortFilter?: string
   ) => {
+    const headersList = await headers();
     const currentUserId = (
-      await auth.api.getSession({ headers: await headers() })
+      await auth.api.getSession({ headers: headersList })
     )?.user.id;
     const isOwner = userIdParameter === currentUserId;
 

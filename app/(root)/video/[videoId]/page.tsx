@@ -1,10 +1,17 @@
 import { redirect } from "next/navigation";
 
-import { VideoDetailHeader, VideoInfo, VideoPlayer } from "@/components";
+import VideoDetailHeader from "@/components/VideoDetailHeader";
+import VideoInfo from "@/components/VideoInfo";
+import VideoPlayer from "@/components/VideoPlayer";
 import { getTranscript, getVideoById } from "@/lib/actions/video";
 
-const page = async ({ params }: Params) => {
-  const { videoId } = await params;
+export default async function Page({
+  params,
+}: {
+  params: Promise<Record<string, string>>;
+}) {
+  const resolvedParams = await params;
+  const { videoId } = resolvedParams;
 
   const { user, video } = await getVideoById(videoId);
   if (!video) redirect("/404");
@@ -16,8 +23,8 @@ const page = async ({ params }: Params) => {
       <VideoDetailHeader
         title={video.title}
         createdAt={video.createdAt}
-        userImg={user?.image}
-        username={user?.name}
+        userImg={user?.image ?? undefined}
+        username={user?.name ?? undefined}
         videoId={video.videoId}
         ownerId={video.userId}
         visibility={video.visibility}
@@ -34,12 +41,9 @@ const page = async ({ params }: Params) => {
           title={video.title}
           createdAt={video.createdAt}
           description={video.description}
-          videoId={videoId}
           videoUrl={video.videoUrl}
         />
       </section>
     </main>
   );
-};
-
-export default page;
+}

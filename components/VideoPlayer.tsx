@@ -8,6 +8,8 @@ import {
 } from "@/lib/actions/video";
 import { initialVideoState } from "@/constants";
 
+type VideoPlayerProps = { videoId: string; className?: string };
+
 const VideoPlayer = ({ videoId, className }: VideoPlayerProps) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [state, setState] = useState(initialVideoState);

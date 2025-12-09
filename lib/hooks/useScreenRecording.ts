@@ -8,6 +8,15 @@ import {
   calculateRecordingDuration,
 } from "@/lib/utils";
 
+type BunnyRecordingState = {
+  isRecording: boolean;
+  recordedBlob: Blob | null;
+  recordedVideoUrl: string;
+  recordingDuration: number;
+};
+
+type ExtendedMediaStream = MediaStream & { _originalStreams?: MediaStream[] };
+
 export const useScreenRecording = () => {
   const [state, setState] = useState<BunnyRecordingState>({
     isRecording: false,
@@ -34,7 +43,7 @@ export const useScreenRecording = () => {
     const { blob, url } = createRecordingBlob(chunksRef.current);
     const duration = calculateRecordingDuration(startTimeRef.current);
 
-    setState((prev) => ({
+    setState((prev: BunnyRecordingState) => ({
       ...prev,
       recordedBlob: blob,
       recordedVideoUrl: url,
@@ -81,7 +90,7 @@ export const useScreenRecording = () => {
       chunksRef.current = [];
       startTimeRef.current = Date.now();
       mediaRecorderRef.current.start(1000);
-      setState((prev) => ({ ...prev, isRecording: true }));
+      setState((prev: BunnyRecordingState) => ({ ...prev, isRecording: true }));
       return true;
     } catch (error) {
       console.error("Recording error:", error);
@@ -96,7 +105,7 @@ export const useScreenRecording = () => {
       streamRef.current?._originalStreams
     );
     streamRef.current = null;
-    setState((prev) => ({ ...prev, isRecording: false }));
+    setState((prev: BunnyRecordingState) => ({ ...prev, isRecording: false }));
   };
 
   const resetRecording = () => {

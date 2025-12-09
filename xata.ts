@@ -6,7 +6,7 @@ import type {
 
 
 
-export type DatabaseSchema = {};
+export type DatabaseSchema = Record<string, unknown>;
 
 const DatabaseClient = buildClient();
 
@@ -17,7 +17,7 @@ const defaultOptions = {
   branch:'main'
 };
 
-export class XataClient extends DatabaseClient<DatabaseSchema> {
+export class XataClient extends DatabaseClient {
   constructor(options?: BaseClientOptions) {
     super({ ...defaultOptions, ...options });
   }

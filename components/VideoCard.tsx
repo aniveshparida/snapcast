@@ -1,8 +1,9 @@
 "use client";
 import Image from "next/image";
-import ImageWithFallback from "./ImageWithFallback";
+
 import Link from "next/link";
 import { useState } from "react";
+import type { VideoCardProps } from "@/constants";
 
 const VideoCard = ({
   id,
@@ -39,7 +40,7 @@ const VideoCard = ({
       <article>
         <div>
           <figure>
-            <ImageWithFallback
+            <Image
               src={userImg}
               width={34}
               height={34}

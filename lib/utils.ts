@@ -4,6 +4,29 @@ import { ilike, sql } from "drizzle-orm";
 import { videos } from "@/drizzle/schema";
 import { DEFAULT_VIDEO_CONFIG, DEFAULT_RECORDING_CONFIG } from "@/constants";
 
+type ApiFetchOptions = {
+  method?: "GET" | "POST" | "DELETE";
+  headers?: Record<string, string>;
+  body?: unknown;
+  expectJson?: boolean;
+};
+
+type MediaStreams = {
+  displayStream: MediaStream;
+  micStream: MediaStream | null;
+  hasDisplayAudio: boolean;
+};
+
+type TranscriptEntry = {
+  time: string;
+  text: string;
+};
+
+type RecordingHandlers = {
+  onDataAvailable: (event: BlobEvent) => void;
+  onStop: () => void;
+};
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -55,25 +78,30 @@ export const apiFetch = async <T = Record<string, unknown>>(
       : "BUNNY_STORAGE_ACCESS_KEY"
   );
 
-  const requestHeaders = {
+  const requestHeaders: Record<string, string> = {
     ...headers,
     AccessKey: key,
-    ...(bunnyType === "stream" && {
-      accept: "application/json",
-      ...(body && { "content-type": "application/json" }),
-    }),
   };
+  if (bunnyType === "stream") {
+    requestHeaders.accept = "application/json";
+    if (body) {
+      requestHeaders["content-type"] = "application/json";
+    }
+  }
 
   const requestOptions: RequestInit = {
     method,
     headers: requestHeaders,
-    ...(body && { body: JSON.stringify(body) }),
   };
+  if (body) {
+    requestOptions.body = JSON.stringify(body);
+  }
 
   const response = await fetch(url, requestOptions);
 
   if (!response.ok) {
-    throw new Error(`API error ${response.text()}`);
+    const bodyText = await response.text().catch(() => "<unable to read response body>");
+    throw new Error(`API error ${response.status}: ${bodyText}`);
   }
 
   if (method === "DELETE" || !expectJson) {
@@ -94,7 +122,8 @@ export const withErrorHandling = <T, A extends unknown[]>(
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error occurred";
-      return errorMessage as unknown as T;
+      console.error("[Server Action Error]", errorMessage, error);
+      throw new Error(errorMessage);
     }
   };
 };

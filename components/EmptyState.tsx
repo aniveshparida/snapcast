@@ -1,5 +1,11 @@
 import Image from "next/image";
 
+type EmptyStateProps = {
+  icon: string;
+  title: string;
+  description: string;
+};
+
 const EmptyState = ({ icon, title, description }: EmptyStateProps) => {
   return (
     <section className="empty-state">

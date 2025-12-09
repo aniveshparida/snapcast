@@ -1,13 +1,26 @@
 "use client";
 import { daysAgo } from "@/lib/utils";
 import { deleteVideo, updateVideoVisibility } from "@/lib/actions/video";
-import Image from "next/image";
+
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { visibilities } from "@/constants";
 import DropdownList from "./DropdownList";
-import ImageWithFallback from "./ImageWithFallback";
+import Image from "next/image";
+
+type Visibility = "public" | "private";
+
+type VideoDetailHeaderProps = {
+  title: string;
+  createdAt: Date;
+  userImg?: string;
+  username?: string;
+  videoId: string;
+  ownerId: string;
+  visibility: Visibility;
+  thumbnailUrl: string;
+};
 
 const VideoDetailHeader = ({
   title,
@@ -88,7 +101,7 @@ const VideoDetailHeader = ({
         <h1>{title}</h1>
         <figure>
           <button onClick={() => router.push(`/profile/${ownerId}`)}>
-            <ImageWithFallback
+            <Image
               src={userImg ?? ""}
               alt="Jason"
               width={24}

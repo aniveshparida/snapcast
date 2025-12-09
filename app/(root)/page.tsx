@@ -1,8 +1,16 @@
-import { EmptyState, Pagination, SharedHeader, VideoCard } from "@/components";
+import EmptyState from "@/components/EmptyState";
+import Pagination from "@/components/Pagination";
+import SharedHeader from "@/components/SharedHeader";
+import VideoCard from "@/components/VideoCard";
 import { getAllVideos } from "@/lib/actions/video";
 
-const page = async ({ searchParams }: SearchParams) => {
-  const { query, filter, page } = await searchParams;
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | undefined>>;
+}) {
+  const resolvedParams = await searchParams;
+  const { query, filter, page } = resolvedParams;
 
   const { videos, pagination } = await getAllVideos(
     query,
@@ -49,6 +57,4 @@ const page = async ({ searchParams }: SearchParams) => {
       )}
     </main>
   );
-};
-
-export default page;
+}

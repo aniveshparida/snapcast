@@ -1,6 +1,4 @@
 import {ChangeEvent, useRef, useState} from "react";
-import postgres from "postgres";
-import value = postgres.toPascal.value;
 
 export const useFileInput = (  maxSize: number ) => {
     const [file, setFile] = useState<File | null>(null);
@@ -26,7 +24,7 @@ export const useFileInput = (  maxSize: number ) => {
                 const video=document.createElement('video');
 
                 video.preload='metadata';
-                video.onloadedmetadata=(event)=>{
+                video.onloadedmetadata=()=>{
                     if(isFinite(video.duration) && video.duration >0)
                     {
                         setDuration(Math.round(video.duration));
@@ -50,6 +48,6 @@ export const useFileInput = (  maxSize: number ) => {
        if(inputRef.current)inputRef.current.value = '';
    }
    return {
-        file, previewUrl, duration, inputRef, handleFileChange,  resetFile
+        file, previewUrl, duration, inputRef, handleFileChange, resetFile
    }
 };

@@ -1,11 +1,21 @@
 import { redirect } from "next/navigation";
 
 import { getAllVideosByUser } from "@/lib/actions/video";
-import { EmptyState, SharedHeader, VideoCard } from "@/components";
+import EmptyState from "@/components/EmptyState";
+import SharedHeader from "@/components/SharedHeader";
+import VideoCard from "@/components/VideoCard";
 
-const ProfilePage = async ({ params, searchParams }: ParamsWithSearch) => {
-  const { id } = await params;
-  const { query, filter } = await searchParams;
+export default async function ProfilePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<Record<string, string>>;
+  searchParams: Promise<Record<string, string | undefined>>;
+}) {
+  const resolvedParams = await params;
+  const resolvedSearchParams = await searchParams;
+  const { id } = resolvedParams;
+  const { query, filter } = resolvedSearchParams;
 
   const { user, videos } = await getAllVideosByUser(id, query, filter);
   if (!user) redirect("/404");
@@ -44,6 +54,4 @@ const ProfilePage = async ({ params, searchParams }: ParamsWithSearch) => {
       )}
     </main>
   );
-};
-
-export default ProfilePage;
+}

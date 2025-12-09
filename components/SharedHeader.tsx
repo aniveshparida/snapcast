@@ -1,14 +1,16 @@
 "use client";
-import Image from "next/image";
+
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
 import RecordScreen from "./RecordScreen";
 import { filterOptions } from "@/constants";
-import ImageWithFallback from "./ImageWithFallback";
+import Image from "next/image";
 import DropdownList from "./DropdownList";
 import { updateURLParams } from "@/lib/utils";
+
+type SharedHeaderProps = { subHeader: string; title: string; userImg?: string };
 
 const SharedHeader = ({ subHeader, title, userImg }: SharedHeaderProps) => {
   const router = useRouter();
@@ -76,7 +78,7 @@ const SharedHeader = ({ subHeader, title, userImg }: SharedHeaderProps) => {
       <section className="header-container">
         <figure className="details">
           {userImg && (
-            <ImageWithFallback
+            <Image
               src={userImg}
               alt="user"
               width={66}

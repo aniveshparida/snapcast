@@ -7,7 +7,8 @@ import {
   saveVideoDetails,
 } from "@/lib/actions/video";
 import { useRouter } from "next/navigation";
-import { FileInput, FormField } from "@/components";
+import FileInput from "@/components/FileInput";
+import FormField from "@/components/FormField";
 import { useFileInput } from "@/lib/hooks/useFileInput";
 import { MAX_THUMBNAIL_SIZE, MAX_VIDEO_SIZE } from "@/constants";
 
@@ -27,6 +28,13 @@ const uploadFileToBunny = (
     if (!response.ok)
       throw new Error(`Upload failed with status ${response.status}`);
   });
+
+type VideoFormValues = {
+  title: string;
+  description: string;
+  tags: string;
+  visibility: "public" | "private";
+};
 
 const UploadPage = () => {
   const router = useRouter();
@@ -87,7 +95,7 @@ const UploadPage = () => {
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev: VideoFormValues) => ({ ...prev, [name]: value }));
   };
 
   const onSubmit = async (e: FormEvent) => {
