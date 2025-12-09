@@ -78,6 +78,9 @@ export const apiFetch = async <T = Record<string, unknown>>(
       : "BUNNY_STORAGE_ACCESS_KEY"
   );
 
+  console.log(`[apiFetch] ${bunnyType} request to ${url}`);
+  console.log(`[apiFetch] Using ${bunnyType === "stream" ? "STREAM" : "STORAGE"} key: ${key.substring(0, 10)}...`);
+
   const requestHeaders: Record<string, string> = {
     ...headers,
     AccessKey: key,
@@ -97,10 +100,18 @@ export const apiFetch = async <T = Record<string, unknown>>(
     requestOptions.body = JSON.stringify(body);
   }
 
+  console.log(`[apiFetch] Request headers:`, Object.keys(requestHeaders));
   const response = await fetch(url, requestOptions);
 
   if (!response.ok) {
     const bodyText = await response.text().catch(() => "<unable to read response body>");
+    console.error(`[apiFetch] Error Response:`, {
+      status: response.status,
+      statusText: response.statusText,
+      body: bodyText,
+      url,
+      headers: Object.keys(requestHeaders),
+    });
     throw new Error(`API error ${response.status}: ${bodyText}`);
   }
 

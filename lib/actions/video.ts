@@ -90,6 +90,12 @@ export const getVideoUploadUrl = withErrorHandling(async () => {
     console.error('[DEBUG] getVideoUploadUrl failed to read session:', err);
     throw err;
   }
+  
+  console.log('[DEBUG] BUNNY_LIBRARY_ID:', BUNNY_LIBRARY_ID);
+  console.log('[DEBUG] STREAM_BASE_URL:', VIDEO_STREAM_BASE_URL);
+  console.log('[DEBUG] streamAccessKey exists:', !!ACCESS_KEYS.streamAccessKey);
+  console.log('[DEBUG] streamAccessKey length:', ACCESS_KEYS.streamAccessKey.length);
+  
   const videoResponse = await apiFetch<BunnyVideoResponse>(
     `${VIDEO_STREAM_BASE_URL}/${BUNNY_LIBRARY_ID}/videos`,
     {

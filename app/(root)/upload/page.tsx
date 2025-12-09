@@ -149,7 +149,10 @@ const UploadPage = () => {
 
       router.push(`/video/${videoId}`);
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "An error occurred during upload";
       console.error("Error submitting form:", error);
+      setError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
