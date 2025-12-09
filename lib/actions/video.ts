@@ -22,14 +22,18 @@ type VideoDetails = {
   duration?: number | null;
 };
 
-// Constants with full names
-const VIDEO_STREAM_BASE_URL = BUNNY.STREAM_BASE_URL;
-const THUMBNAIL_STORAGE_BASE_URL = BUNNY.STORAGE_BASE_URL;
-const THUMBNAIL_CDN_URL = BUNNY.CDN_URL;
-const BUNNY_LIBRARY_ID = getEnv("BUNNY_LIBRARY_ID");
-const ACCESS_KEYS = {
-  streamAccessKey: getEnv("BUNNY_STREAM_ACCESS_KEY"),
-  storageAccessKey: getEnv("BUNNY_STORAGE_ACCESS_KEY"),
+// Lazy config accessor to avoid evaluating env at module-load/build time
+const getBunnyConfig = () => {
+  return {
+    VIDEO_STREAM_BASE_URL: BUNNY.STREAM_BASE_URL,
+    THUMBNAIL_STORAGE_BASE_URL: BUNNY.STORAGE_BASE_URL,
+    THUMBNAIL_CDN_URL: BUNNY.CDN_URL,
+    BUNNY_LIBRARY_ID: getEnv("BUNNY_LIBRARY_ID"),
+    ACCESS_KEYS: {
+      streamAccessKey: getEnv("BUNNY_STREAM_ACCESS_KEY"),
+      storageAccessKey: getEnv("BUNNY_STORAGE_ACCESS_KEY"),
+    },
+  };
 };
 
 const validateWithArcjet = async (fingerPrint: string) => {
@@ -91,11 +95,12 @@ export const getVideoUploadUrl = withErrorHandling(async () => {
     throw err;
   }
   
-  console.log('[DEBUG] BUNNY_LIBRARY_ID:', BUNNY_LIBRARY_ID);
-  console.log('[DEBUG] STREAM_BASE_URL:', VIDEO_STREAM_BASE_URL);
-  console.log('[DEBUG] streamAccessKey exists:', !!ACCESS_KEYS.streamAccessKey);
-  console.log('[DEBUG] streamAccessKey length:', ACCESS_KEYS.streamAccessKey.length);
-  
+  const {
+    VIDEO_STREAM_BASE_URL,
+    BUNNY_LIBRARY_ID,
+    ACCESS_KEYS,
+  } = getBunnyConfig();
+
   const videoResponse = await apiFetch<BunnyVideoResponse>(
     `${VIDEO_STREAM_BASE_URL}/${BUNNY_LIBRARY_ID}/videos`,
     {
@@ -115,15 +120,16 @@ export const getVideoUploadUrl = withErrorHandling(async () => {
 
 export const getThumbnailUploadUrl = withErrorHandling(
   async (videoId: string) => {
-    const timestampedFileName = `${Date.now()}-${videoId}-thumbnail`;
-    const uploadUrl = `${THUMBNAIL_STORAGE_BASE_URL}/thumbnails/${timestampedFileName}`;
-    const cdnUrl = `${THUMBNAIL_CDN_URL}/thumbnails/${timestampedFileName}`;
+      const { THUMBNAIL_STORAGE_BASE_URL, THUMBNAIL_CDN_URL, ACCESS_KEYS } = getBunnyConfig();
+      const timestampedFileName = `${Date.now()}-${videoId}-thumbnail`;
+      const uploadUrl = `${THUMBNAIL_STORAGE_BASE_URL}/thumbnails/${timestampedFileName}`;
+      const cdnUrl = `${THUMBNAIL_CDN_URL}/thumbnails/${timestampedFileName}`;
 
-    return {
-      uploadUrl,
-      cdnUrl,
-      accessKey: ACCESS_KEYS.storageAccessKey,
-    };
+      return {
+        uploadUrl,
+        cdnUrl,
+        accessKey: ACCESS_KEYS.storageAccessKey,
+      };
   }
 );
 
@@ -142,6 +148,7 @@ export const saveVideoDetails = withErrorHandling(
 
       await validateWithArcjet(userId);
 
+      const { VIDEO_STREAM_BASE_URL, BUNNY_LIBRARY_ID } = getBunnyConfig();
       await apiFetch(
         `${VIDEO_STREAM_BASE_URL}/${BUNNY_LIBRARY_ID}/videos/${videoDetails.videoId}`,
         {
@@ -157,7 +164,7 @@ export const saveVideoDetails = withErrorHandling(
       const now = new Date();
       const insertResult = await db.insert(videos).values({
         ...videoDetails,
-        videoUrl: `${BUNNY.EMBED_URL}/${BUNNY_LIBRARY_ID}/${videoDetails.videoId}`,
+        videoUrl: `${BUNNY.EMBED_URL}/${getBunnyConfig().BUNNY_LIBRARY_ID}/${videoDetails.videoId}`,
         userId,
         createdAt: now,
         updatedAt: now,
