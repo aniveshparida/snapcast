@@ -197,6 +197,8 @@ export const getAllVideos = withErrorHandling(async (
   const session = await auth.api.getSession({ headers: headersList });
   const currentUserId = session?.user.id ?? null;
 
+  console.log('[getAllVideos] session keys:', session ? Object.keys(session) : null, 'currentUserId:', currentUserId);
+
   const canSeeTheVideos = currentUserId
     ? or(eq(videos.visibility, 'public'), eq(videos.userId, currentUserId))
     : eq(videos.visibility, 'public');
