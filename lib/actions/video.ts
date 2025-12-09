@@ -194,13 +194,12 @@ export const getAllVideos = withErrorHandling(async (
   pageSize: number = 8,
 ) => {
   const headersList = await headers();
-  const session = await auth.api.getSession({ headers: headersList })
-  const currentUserId = session?.user.id;
+  const session = await auth.api.getSession({ headers: headersList });
+  const currentUserId = session?.user.id ?? null;
 
-  const canSeeTheVideos = or(
-      eq(videos.visibility, 'public'),
-      eq(videos.userId, currentUserId!),
-  );
+  const canSeeTheVideos = currentUserId
+    ? or(eq(videos.visibility, 'public'), eq(videos.userId, currentUserId))
+    : eq(videos.visibility, 'public');
 
   const whereCondition = searchQuery.trim()
       ? and(
