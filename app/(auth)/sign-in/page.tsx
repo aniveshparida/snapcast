@@ -15,7 +15,16 @@ const SignInPage = () => {
   }, [session, router]);
 
   const signInWithGoogle = async () => {
-    await authClient.signIn.social({ provider: "google" });
+    try {
+      await authClient.signIn.social({ provider: "google" });
+    } catch (err) {
+      // surface errors for easier debugging in production
+      // eslint-disable-next-line no-console
+      console.error("Sign in failed:", err);
+      // lightweight user feedback
+      // eslint-disable-next-line no-alert
+      alert("Sign in failed. Check the console or verify your auth configuration.");
+    }
   };
 
   return (
@@ -28,8 +37,18 @@ const SignInPage = () => {
         <div className="description">
           <section>
             <figure>
+              <div className="avatar">
+                <Image
+                  src={session?.user?.image ?? "/assets/images/jason.png"}
+                  alt={session?.user?.name ?? "Jason Rivera"}
+                  width={72}
+                  height={72}
+                />
+              </div>
+
               <div className="stars">★★★★★</div>
             </figure>
+
             <p>
               SnapCast makes screen recording easy. From quick walkthroughs to full
               presentations, it's fast, smooth, and shareable in seconds

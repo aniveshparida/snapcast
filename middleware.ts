@@ -2,8 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 
 export async function middleware(request: NextRequest) {
-  // Allow the public landing page to be accessible without auth
+  // If user visits the root path, redirect to sign-in when no session cookie
   if (request.nextUrl.pathname === "/") {
+    if (!hasSessionCookie) {
+      return NextResponse.redirect(new URL('/sign-in', request.url));
+    }
+
     return NextResponse.next();
   }
 
